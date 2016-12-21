@@ -1,0 +1,2056 @@
+--[[
+.---.  .---.     .-''-.  ,---.   .--.,---------.    ____    .-./`)                       
+|   |  |_ _|   .'_ _   \ |    \  |  |\          \ .'  __ `. \ .-.')                      
+|   |  ( ' )  / ( ` )   '|  ,  \ |  | `--.  ,---'/   '  \  \/ `-' \                      
+|   '-(_{;}_). (_ o _)  ||  |\_ \|  |    |   \   |___|  /  | `-'`"`                      
+|      (_,_) |  (_,_)___||  _( )_\  |    :_ _:      _.-`   | .---.                       
+| _ _--.   | '  \   .---.| (_ o _)  |    (_I_)   .'   _    | |   |                       
+|( ' ) |   |  \  `-'    /|  (_,_)\  |   (_(=)_)  |  _( )_  | |   |                       
+(_{;}_)|   |   \       / |  |    |  |    (_I_)   \ (_ o _) / |   |                       
+'(_,_) '---'    `'-..-'  '--'    '--'    '---'    '.(_,_).'  '---'                       
+            ,-----.    .-------.   .-./`)    ____    ,---.   .--.,---.   .--.   ____     
+          .'  .-,  '.  |  _ _   \  \ .-.') .'  __ `. |    \  |  ||    \  |  | .'  __ `.  
+         / ,-.|  \ _ \ | ( ' )  |  / `-' \/   '  \  \|  ,  \ |  ||  ,  \ |  |/   '  \  \ 
+        ;  \  '_ /  | :|(_ o _) /   `-'`"`|___|  /  ||  |\_ \|  ||  |\_ \|  ||___|  /  | 
+        |  _`,/ \ _/  || (_,_).' __ .---.    _.-`   ||  _( )_\  ||  _( )_\  |   _.-`   | 
+        : (  '\_/ \   ;|  |\ \  |  ||   | .'   _    || (_ o _)  || (_ o _)  |.'   _    | 
+         \ `"/  \  ) / |  | \ `'   /|   | |  _( )_  ||  (_,_)\  ||  (_,_)\  ||  _( )_  | 
+          '. \_/``".'  |  |  \    / |   | \ (_ o _) /|  |    |  ||  |    |  |\ (_ o _) / 
+            '-----'    ''-'   `'-'  '---'  '.(_,_).' '--'    '--''--'    '--' '.(_,_).'                                                                                          
+--]]
+--ver. 0.52
+
+if myHero.charName ~= "Orianna" then return end
+
+local version = "0.52"
+local LocalVersion = 0.52
+local scriptname = "Hentai Orianna"
+local developer = "remembermyhentai"
+local contact = "skype xd_kikass"
+local DP, VP, KP, HP = nil
+local FHPred = false
+local AnalBall = myHero
+local AnalAction = false
+
+local REGEN = false
+local ENGAGES = false
+local INTERRUPTING = false
+local FONTAN = false
+local lowBase = {["x"] = 406, ["z"] = 424}
+local upBase = {["x"] = 14322, ["z"] = 14394}
+local FOCUSED = nil
+local POTS = {"ItemCrystalFlask", "RegenerationPotion", "ItemMiniRegenPotion", "ItemCrystalFlaskJungle", "ItemDarkCrystalFlask"}
+local ATTACKITEMS = {"ItemWillBoltSpellBase"}
+local BOLT, BOLTSLOT
+
+local EngagersArray = 
+{
+["AatroxQ"] = true,
+["BandageToss"] = true,
+["Headbutt"] = true,
+["DianaTeleport"] = true,
+["Landslide"] = true,
+["NocturneParanoia"] = true,
+["MonkeyKingNimbus"] = true,
+["MonkeyKingSpinToWin"] = true,
+["SummonerFlash"] = true,
+["PoppyE"] = true,
+["ShyvanaTransformCast"] = true,
+["threshqleap"] = true,
+["RenektonSliceAndDice"] = true,
+["RengarR"] = true,
+["KennenLightningRush"] = true,
+["SummonerFlash"] = true,
+["OlafRagnarok"] = true,
+["UdyrBearStance"] = true,
+["VolibearQ"] = true,
+["TalonCutthroat"] = true,
+["JarvanIVDragonStrike"] = true,
+["JaxLeapStrike"] = true,
+["UrgotSwap2"] = true,
+["BlindMonkQTwo"] = true,
+["ShenE"] = true,
+["YasuoRKnockUpComboW"] = true,
+["ViQ"] = true,
+["ViR"] = true,
+["InfiniteDuress"] = true,
+["ZacE"] = true
+}
+
+local PussyOut = 
+{
+["KatarinaR"] = true,
+["AlZaharNetherGrasp"] = true,
+["TwistedFateR"] = true,
+["VelkozR"] = true,
+["InfiniteDuress"] = true,
+["JhinR"] = true,
+["CaitlynAceintheHole"] = true,
+["UrgotSwap2"] = true,
+["LucianR"] = true,
+["GalioIdolOfDurand"] = true,
+["MissFortuneBulletTime"] = true,
+["XerathLocusPulse"] = true
+}
+
+local VARS = {
+  AA = {RANGE = 575},
+  Q = {RANGE = 825, RADIUS = 80, DELAY = 0, SPEED = 1200},
+  W = {RADIUS = 219, DELAY = 0.25},
+  E = {RANGE = 1093, DELAY = 0.25, SPEED = 1700, RADIUS = 80},
+  R = {RADIUS = 380, DELAY = 0.6}
+}
+
+local oriannaQhuge = {range = VARS.Q.RANGE*3, speed = VARS.Q.SPEED*1.5, delay = VARS.Q.DELAY, radius = VARS.Q.RADIUS, type = "DelayLine", width = VARS.Q.RADIUS}
+local oriannaEhuge = {range = VARS.Q.RANGE*3, speed = VARS.E.SPEED, delay = VARS.E.DELAY, radius = VARS.E.RADIUS, type = "DelayLine", width = VARS.E.RADIUS}
+
+function OnLoad()
+  AddApplyBuffCallback(Buff_Add)
+  AddRemoveBuffCallback(Buff_Rem)
+
+  KatarinaUpdate(
+    Version,
+    'raw.githubusercontent.com', 
+    '/remembermyhentai/BoL/master/Orianna/HentaiOrianna.version',
+    '/remembermyhentai/BoL/master/Orianna/HentaiOrianna.lua', 
+    SCRIPT_PATH.._ENV.FILE_NAME, 
+    function() PrintChat('<font color = \"#B13070\">[HENTAI ORIANNA]</font> <font color = \"#4DFF4D\">SCRIPT UPDATED. RESTART BOL (2xF9)</font>') end, 
+    function() PrintChat('<font color = \"#B13070\">[HENTAI ORIANNA]</font> <font color = \"#4DFF4D\">LOADED VERSION //</font>'..version) end, 
+    function() PrintChat(Menu.update and '<font color = \"#B13070\">[HENTAI RENGAR]</font> <font color = \"#4DFF4D\">NEW VERSION, WAIT...</font>' or
+     '<font color = \"#B13070\">[HENTAI ORIANNA]</font> <font color = \"#4DFF4D\">NEW VERSION, DOWNLOAD IT MANUALLY FROM FORUM</font>') end, 
+    function() PrintChat('<font color = \"#B13070\">[HENTAI ORIANNA]</font> <font color = \"#4DFF4D\">UPDATE ERROR, DOWNLOAD IT MANUALLY FROM FORUM</font>') end)
+
+  Menu = scriptConfig("[Hentai Orianna]", "HentaiOrianna")
+  Menu:addSubMenu("[Key Binds]", "Key")
+  Menu.Key:addParam("combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte(" "))
+  Menu.Key:addParam("harras", "Harras", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
+  Menu.Key:addParam("lasthit", "Lasthit", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
+  Menu.Key:addParam("laneclear", "Laneclear/Jungleclear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("V"))
+  Menu.Key:addParam("flee", "Flee", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))
+
+  Menu:addSubMenu("[Combo]", "Combo")
+  Menu.Combo:addParam("focus", "Focus selected Target/stick", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useGLP", "Use GLP-800", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useQ", "Use Q", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useW", "Use W", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useE", "Use E", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useR", "Use R", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useEQ", "Use fast EQ", SCRIPT_PARAM_ONOFF, true)
+  Menu.Combo:addParam("useRN", "Use R at least in", SCRIPT_PARAM_LIST, 1, { "1 target", "2 targets", "3 targets", "4 targets" , "5 targets"})
+
+  Menu:addSubMenu("[Harras]", "Harras")
+  Menu.Harras:addParam("useQ", "Use Q", SCRIPT_PARAM_ONOFF, true)
+  Menu.Harras:addParam("useW", "Use W", SCRIPT_PARAM_ONOFF, true)
+  Menu.Harras:addParam("useE", "Use E", SCRIPT_PARAM_ONOFF, true)
+  Menu.Harras:addParam("harrasMana", "% Mana for harras", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
+
+  Menu:addSubMenu("[Prediction]", "Prediction")
+  Menu.Prediction:addParam("activePred", "Prediction (require reload)", SCRIPT_PARAM_LIST, 1, {"VPred", "DPred (disabled)", "FHPred", "KPred (disabled)", "HPred"})
+  if Menu.Prediction.activePred == 1 then
+    if FileExist(LIB_PATH .. "VPrediction.lua") then
+      require "VPrediction"
+      VP = VPrediction()
+      Menu.Prediction:addParam("QVPHC", "Q HitChance", SCRIPT_PARAM_SLICE, 2, 1, 5, 0)
+    end
+  elseif Menu.Prediction.activePred == 2 then
+    if VIP_USER and FileExist(LIB_PATH.."DivinePred.lua") and FileExist(LIB_PATH.."DivinePred.luac") then
+      require "DivinePred"
+      DP = DivinePred()
+      DPQ = LineSS(VARS.Q.SPEED*1.5, math.huge, VARS.Q.RADIUS, VARS.Q.DELAY*1000, math.huge)
+      DPQA = LineSS(VARS.Q.SPEED, math.huge, VARS.Q.RADIUS, VARS.Q.DELAY*1000, math.huge)
+      Menu.Prediction:addParam("QHC", "Q HitChance %", SCRIPT_PARAM_SLICE, 75, 50, 100, 0)
+    end
+  elseif Menu.Prediction.activePred == 3 then
+    if FileExist(LIB_PATH.."FHPrediction.lua") then
+      require("FHPrediction")
+      FHPred = true
+      PrintChat("FHPrediction found")
+      Menu.Prediction:addParam("infoFH", "FHPrediction found", SCRIPT_PARAM_INFO, "")
+    else
+      PrintChat("Something wrong with FHPred, contact developer")
+    end
+  elseif Menu.Prediction.activePred == 4 then
+    if FileExist(LIB_PATH.."KPrediction.lua") then
+      require "KPrediction"
+      KP = KPrediction()
+      Menu.Prediction:addParam("QKPHC", "Q HitChance", SCRIPT_PARAM_SLICE, 1.5, 1, 2, 1)
+    end 
+  elseif Menu.Prediction.activePred == 5 then
+    if FileExist(LIB_PATH.."HPrediction.lua") then
+      require "HPrediction"
+      HP = HPrediction()
+      hp_q = HPSkillshot(oriannaQhuge)
+      hp_e = HPSkillshot(oriannaEhuge)
+      Menu.Prediction:addParam("QHPHC", "Q HitChance", SCRIPT_PARAM_SLICE, 2, 1, 3, 1)
+    end 
+  end
+
+  Menu:addSubMenu("[Farm]", "Farm")
+  Menu.Farm:addSubMenu("[Lasthit]", "Lasthit")
+  Menu.Farm.Lasthit:addParam("lasthitQ", "Use Q for lasthit", SCRIPT_PARAM_ONOFF, false)
+  Menu.Farm.Lasthit:addParam("lasthitQmana", "% Mana for lasthit", SCRIPT_PARAM_SLICE, 60, 0, 100, 0)
+  Menu.Farm:addSubMenu("[Clear]", "Laneclear")
+  Menu.Farm.Laneclear:addParam("laneclearQ", "Use Q for clear", SCRIPT_PARAM_ONOFF, false)
+  Menu.Farm.Laneclear:addParam("laneclearW", "Use W for clear", SCRIPT_PARAM_ONOFF, false)
+  Menu.Farm.Laneclear:addParam("laneclearMana", "% Mana for clear", SCRIPT_PARAM_SLICE, 50, 0, 100, 0)
+
+  Menu:addSubMenu("[Draws]", "Draws")
+  Menu.Draws:addParam("drawBall", "Draw Ball position", SCRIPT_PARAM_ONOFF, true)
+  Menu.Draws:addParam("drawQ", "Draw Q range", SCRIPT_PARAM_ONOFF, true)
+  Menu.Draws:addParam("drawW", "Draw W range", SCRIPT_PARAM_ONOFF, false)
+  Menu.Draws:addParam("drawE", "Draw E range", SCRIPT_PARAM_ONOFF, false)
+  Menu.Draws:addParam("drawHP", "Draw damage on HP bars", SCRIPT_PARAM_ONOFF, true)
+
+  Menu:addSubMenu("[Auto]", "Auto")
+  Menu.Auto:addParam("blockR", "Block R if it is not going to hit", SCRIPT_PARAM_ONOFF, true)
+  Menu.Auto:addSubMenu("Auto E on engagers", "autoEngage")
+    local topkek = false
+    for champion, spell in pairs(EngagersArray) do
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if ally.charName == champion then
+          topkek = true
+          Menu.Auto.autoEngage:addParam(champion..spell, champion.." ("..spell..")", SCRIPT_PARAM_ONOFF, true)
+        end
+      end
+    end
+
+    if not topkek then
+      Menu.Auto.autoEngage:addParam("info", " ", SCRIPT_PARAM_INFO, "No engagers")
+    else
+      Menu.Auto.autoEngage:addParam("Active", "Enabled", SCRIPT_PARAM_ONOFF, true)
+    end
+  Menu.Auto:addParam("useW", "Auto W on", SCRIPT_PARAM_LIST, 3, { "Disabled", "1+ targets", "2+ targets", "3+ targets", "4+ targets", "5 targets" })
+  Menu.Auto:addParam("useR", "Auto R on", SCRIPT_PARAM_LIST, 4, { "Disabled", "1+ targets", "2+ targets", "3+ targets", "4+ targets", "5 targets" })
+  Menu.Auto:addParam("autoInterrupt", "Auto interrupt chanelled spells", SCRIPT_PARAM_ONOFF, true)
+  Menu.Auto:addParam("autoPots", "Auto Potions usage", SCRIPT_PARAM_ONOFF, false)
+  Menu.Auto:addParam("autoPotsHealth", "% Health for autopots", SCRIPT_PARAM_SLICE, 75, 0, 100, 0)
+
+  Menu:addSubMenu("[Killsteal]", "KS")
+  Menu.KS:addParam("ksQ", "Use Q for killsteal", SCRIPT_PARAM_ONOFF, true)
+  Menu.KS:addParam("ksW", "Use W for killsteal", SCRIPT_PARAM_ONOFF, true)
+  Menu.KS:addParam("ksIgnite", "Use Ignite for killsteal", SCRIPT_PARAM_ONOFF, true)
+
+  Menu:addParam("info1", "", SCRIPT_PARAM_INFO, "")
+  Menu:addParam("info2", ""..scriptname.." [ver. "..version.."]", SCRIPT_PARAM_INFO, "")
+  Menu:addParam("update", "Enable Auto Update", SCRIPT_PARAM_ONOFF, true)
+  Menu:addParam("info5", "", SCRIPT_PARAM_INFO, "")
+  Menu:addParam("info3", "Created by "..developer.."", SCRIPT_PARAM_INFO, "")
+  Menu:addParam("info4", "Contact me: "..contact.."", SCRIPT_PARAM_INFO, "")
+
+  igniteslot = FindSlotByName("summonerdot")
+end
+
+function OnTick()
+  if FOCUSED ~= nil then
+    if FOCUSED.dead or not FOCUSED.visible then
+      FOCUSED = nil
+    end
+  end
+
+  if Menu.Key.flee then
+    Flee()
+  end
+
+  if igniteslot ~= nil then
+    AutoIgnite()
+  end
+
+  Killsteal()
+  
+  if Menu.Key.combo then
+    Combo()
+  end
+  
+  if Menu.Key.harras then
+    Harras()
+  end
+  
+  if Menu.Key.lasthit then
+    Lasthit()
+  end
+  
+  if Menu.Key.laneclear then
+    Laneclear()
+  end
+  
+  if Menu.Auto.autoPots then
+    CheckFountain()
+  end
+  if Menu.Auto.autoPots and not REGEN and not FONTAN then
+    AutoPotion()
+  end 
+  
+  if Menu.Auto.autoEngage.Active and CanCast(_E) then
+    AutoEonEngagers()
+  else
+    ENGAGES = false
+  end
+  
+  if Menu.Auto.autoInterrupt and CanCast(_R) then
+    AutoRInterrupt()
+  else
+    INTERRUPTING = false
+  end
+  
+  if Menu.Auto.useR > 1 and CanCast(_R) then
+    AutoRN()  
+  end
+  
+  if Menu.Auto.useW > 1 and CanCast(_W) then
+    AutoWN()
+  end
+
+  FindItems()
+end
+
+function Flee()
+  if GetRastoyanie(mousePos, myHero) > 300 then
+    local a = (mousePos.x - myHero.x)/GetRastoyanie(mousePos, myHero) * 300 + myHero.x
+    local b = (mousePos.z - myHero.z)/GetRastoyanie(mousePos, myHero) * 300 + myHero.z
+    myHero:MoveTo(a, b)
+  else
+    myHero:MoveTo(mousePos.x, mousePos.z)
+  end
+  if AnalBall == myHero and CanCast(_W) then
+    CastSpell(_W)
+  end
+  if AnalBall ~= myHero then
+    CastE(myHero)
+  end
+end
+
+function OnDraw()
+  if not myHero.dead then
+    if Menu.Draws.drawHP then
+      DrawHP()
+    end
+    if AnalBall then
+      if Menu.Draws.drawBall then
+        DrawFPSCircle(AnalBall.x, AnalBall.z, 120, ARGB(255,233,61,255), 24)
+        DrawFPSCircle(AnalBall.x, AnalBall.z, 100, ARGB(255,233,61,255), 24)
+      end
+      if Menu.Draws.drawR then
+        DrawFPSCircle(AnalBall.x, AnalBall.z, VARS.R.RADIUS, ARGB(255,193,61,255), 24)
+      end
+      if Menu.Draws.drawW then
+        DrawFPSCircle(AnalBall.x, AnalBall.z, VARS.W.RADIUS, ARGB(255,193,61,255), 24)
+      end
+    end
+    if Menu.Draws.drawQ then
+      DrawFPSCircle(myHero.x, myHero.z, VARS.Q.RANGE, ARGB(255,193,61,255), 24)
+    end
+    if Menu.Draws.drawE then
+      DrawFPSCircle(myHero.x, myHero.z, VARS.E.RANGE, ARGB(255,193,61,255), 24)
+    end
+  end
+end
+
+function Combo()
+  if Menu.Combo.useGLP and BOLT then
+    if CanCast(BOLTSLOT) then
+      local target = GetHentaiTarget(825)
+      if target ~= nil then
+        if GetRastoyanie(myHero,target) <= 825 then
+          CastBOLT(target)
+        end
+      end
+    end
+  end
+  local target = GetHentaiTarget(VARS.Q.RANGE + VARS.Q.RADIUS)
+  if not target then
+    target = GetHentaiTarget(VARS.Q.RANGE + VARS.Q.RADIUS * 2)
+    if target then
+      ComboTarget(target)
+    end
+  else
+    ComboTarget(target)
+  end
+end
+
+function ComboTarget(target)
+  if CountEnemyHeroInRange(VARS.Q.RANGE + VARS.R.RADIUS, myHero) == 1 then
+    if target and Menu.Combo.useR and CountEnemyHeroInRange(1000, target) >= CountAllyHeroInRange(1000, target)  then
+      if target and GetComboDamage(target) >= target.health and RastoyanieToClosestAlly(AnalBall) < (VARS.Q.RANGE * 1.3) then
+        local hitcount, hit = CheckEnemiesHitByR()
+        if hitcount ~= nil then
+          if hitcount >= Menu.Combo.useRN then
+            CastR(target)
+          end
+        end
+      end
+    end
+    if CanCast(_W) and Menu.Combo.useW then
+      CastW()
+    end
+    if Menu.Combo.useQ then
+      CastQ(target)
+    end
+    if Menu.Combo.useE and CanCast(_E) then
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, math.huge) and GetRastoyanie(myHero, ally) < VARS.E.RANGE and CountEnemyHeroInRange(400, ally) >= 1 
+          and (target == nil or GetRastoyanie(ally, target) < 400) then
+            CastE(ally)
+        end
+      end
+    end
+    if Menu.Combo.useE and CanCast(_E) then
+      CastAggroE(myHero, 1)
+    end
+  else
+    if not CanCast(_R) then
+      if target and Menu.Combo.useR and CountEnemyHeroInRange(1000, target) >= CountAllyHeroInRange(1000, target)  then
+        if target and GetComboDamage(target) >= target.health and RastoyanieToClosestAlly(AnalBall) < (VARS.Q.RANGE * 1.3) then
+          local hitcount, hit = CheckEnemiesHitByR()
+          if hitcount ~= nil then
+            if hitcount >= Menu.Combo.useRN then
+              CastR(target)
+            end
+          end
+        end
+      end
+      if CanCast(_W) and Menu.Combo.useW then
+        CastW()
+      end
+      if Menu.Combo.useQ then
+        CastQ(target)
+      end
+      if Menu.Combo.useE and CanCast(_E) then
+        for i, ally in ipairs(GetAllyHeroes()) do
+          if isValid(ally, math.huge) and GetRastoyanie(myHero, ally) < VARS.E.RANGE and CountEnemyHeroInRange(400, ally) >= 1 
+            and (target == nil or GetRastoyanie(ally, target) < 400) then
+              CastE(ally)
+          end
+        end
+      end
+      if Menu.Combo.useE and CanCast(_E) then
+        CastAggroE(myHero, 1)
+      end
+    else
+      if Menu.Combo.useR and CanCast(_R) then
+        if CountEnemyHeroInRange(800, AnalBall) > 1 then
+          local hitcount, hit = CheckEnemiesHitByR()
+          local potentialkills, kills = 0, 0
+          if hitcount ~= nil then
+            if hitcount >= 2 then
+              for i, champion in ipairs(hit) do
+                if (champion.health - GetComboDamage(champion)) < 0.4*champion.maxHealth or (GetComboDamage(champion) >= 0.4*champion.maxHealth) then
+                  potentialkills = potentialkills + 1
+                end
+                if (champion.health - GetComboDamage(champion)) < 0 then
+                  kills = kills + 1
+                end
+              end
+            end
+          end
+          if hitcount ~= nil then
+            if (((RastoyanieToClosestAlly(AnalBall) < VARS.Q.RANGE * 1.3) and ((hitcount >= CountEnemyHeroInRange(800, AnalBall)))
+             or (potentialkills >= 2)) or kills >= 1) and hitcount >= Menu.Combo.useRN then
+              CastSpell(_R)
+            end
+          end
+        elseif Menu.Combo.useRN == 1 then
+          if target and GetComboDamage(target) >= target.health and RastoyanieToClosestAlly(AnalBall) < VARS.Q.RANGE * 1.3 then
+            CastR(target)
+          end
+        end
+      end
+      if Menu.Combo.useW and CanCast(_W) then
+        CastW()
+      end
+      if Menu.Combo.useQ then
+        local QPos, hit = PizdiDal(target)
+        if QPos and hit > 1 then
+          CastSpell(_Q, QPos.x, QPos.z)
+        else
+          CastQ(target)
+        end
+      end
+      if Menu.Combo.useE and CanCast(_E) then
+        if CountEnemyHeroInRange(800, AnalBall) <= 2 then
+          CastAggroE(myHero, 1)
+        else
+          CastAggroE(myHero, 2)
+        end
+        for i, ally in ipairs(GetAllyHeroes()) do
+          if isValid(ally, VARS.E.RANGE) and CountEnemyHeroInRange(300, ally) >= 3 and (target == nil or GetRastoyanie(ally, target) < 300) then
+            CastSpell(_E, ally)
+          end
+        end
+      end
+    end
+  end
+end
+
+function GetComboDamage(target)
+  local comboDmg = 0
+  if CanCast(_R) then
+    comboDmg = comboDmg + GetRDamage(target)
+  end
+  comboDmg = comboDmg + GetQDamage(target)
+  comboDmg = comboDmg + GetWDamage(target)
+  comboDmg = comboDmg + GetEDamage(target)
+  if igniteslot ~= nil then
+    if CanCast(igniteslot) then
+      comboDmg = comboDmg + (50 + 20*myHero.level)
+    end
+  end
+  return comboDmg
+end
+
+function DrawHP()
+  for i, HPbarEnemyChamp in pairs(GetEnemyHeroes()) do
+    if not HPbarEnemyChamp.dead and HPbarEnemyChamp.visible then
+      local dmg = myHero:CalcDamage(HPbarEnemyChamp, myHero.totalDamage)
+      if myHero:CanUseSpell(_Q) == READY and not HPbarEnemyChamp.dead then
+        dmg = dmg + GetQDamage(HPbarEnemyChamp)
+      end
+      if CanCast(_W) then
+        dmg = dmg + GetWDamage(HPbarEnemyChamp)
+      end
+      if myHero:CanUseSpell(_R) == READY and not HPbarEnemyChamp.dead then
+        dmg = dmg + GetRDamage(HPbarEnemyChamp)
+      end
+      if myHero:CanUseSpell(_E) == READY and not HPbarEnemyChamp.dead then
+        dmg = dmg + GetEDamage(HPbarEnemyChamp)
+      end
+      if igniteslot ~= nil then
+        if CanCast(igniteslot) then
+          dmg = dmg + (50 + 20*myHero.level)
+        end
+      end
+      DrawLineHPBar(dmg, "", HPbarEnemyChamp, HPbarEnemyChamp.team)
+    end
+  end
+end
+
+function Harras()
+  if ((myHero.mana*100)/myHero.maxMana) < Menu.Harras.harrasMana then return end
+  local target = GetHentaiTarget(VARS.Q.RANGE + VARS.Q.RADIUS)
+  if not target then
+    target = GetHentaiTarget(VARS.Q.RANGE + VARS.Q.RADIUS * 2)
+    if target then
+      ComboTargetA(target)
+    end
+  else
+    ComboTargetA(target)
+  end
+end
+
+function ComboTargetA(target)
+  if CountEnemyHeroInRange(VARS.Q.RANGE + VARS.R.RADIUS, myHero) == 1 then
+    if CanCast(_W) and Menu.Harras.useW then
+      CastW()
+    end
+    if Menu.Harras.useQ then
+      CastQ(target)
+    end
+    if Menu.Harras.useE and CanCast(_E) then
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, math.huge) and GetRastoyanie(myHero, ally) < VARS.E.RANGE and CountEnemyHeroInRange(400, ally) >= 1 
+          and (target == nil or GetRastoyanie(ally, target) < 400) then
+            CastE(ally)
+        end
+      end
+    end
+    if Menu.Harras.useE and CanCast(_E) then
+      CastAggroE(myHero, 1)
+    end
+  else
+    if Menu.Harras.useW and CanCast(_W) then
+      CastW()
+    end
+    if Menu.Harras.useQ then
+      local QPos, hit = PizdiDal(target)
+      if QPos and hit > 1 then
+        CastSpell(_Q, QPos.x, QPos.z)
+      else
+        CastQ(target)
+      end
+    end
+    if Menu.Harras.useE and CanCast(_E) then
+      if CountEnemyHeroInRange(800, AnalBall) <= 2 then
+        CastAggroE(myHero, 1)
+      else
+        CastAggroE(myHero, 2)
+      end
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, VARS.E.RANGE) and CountEnemyHeroInRange(300, ally) >= 3 and (target == nil or GetRastoyanie(ally, target) < 300) then
+          CastSpell(_E, ally)
+        end
+      end
+    end
+  end
+end
+
+function Laneclear()
+  if ((myHero.mana*100)/myHero.maxMana) <= Menu.Farm.Laneclear.laneclearMana then return end
+  if CanCast(_Q) and Menu.Farm.Laneclear.laneclearQ then
+    local CastPosition, NumHit = GetBestCircularFarmPosition(VARS.Q.RANGE, VARS.Q.RADIUS, minionManager(MINION_ENEMY, VARS.Q.RANGE, myHero, MINION_SORT_HEALTH_ASC).objects)
+    if CastPosition ~= nil then
+      CastSpell(_Q, CastPosition.x, CastPosition.z)
+    end
+    local CastPositionJgl, NumHitJgl = GetBestCircularFarmPosition(VARS.Q.RANGE, VARS.Q.RADIUS, minionManager(MINION_JUNGLE, VARS.Q.RANGE, myHero, MINION_SORT_MAXHEALTH_DEC).objects)
+    if CastPositionJgl ~= nil then
+      CastSpell(_Q, CastPositionJgl.x, CastPositionJgl.z)
+    end
+  end
+  if CanCast(_W) and Menu.Farm.Laneclear.laneclearW then
+    local n = CountMinionsNearBall()
+    if n > 1 then
+      CastSpell(_W)
+    end
+  end
+end
+
+function CountMinionsNearBall()
+  local n = 0
+  for _, minion in pairs(minionManager(MINION_ENEMY, VARS.Q.RANGE, myHero, MINION_SORT_HEALTH_ASC).objects) do
+    if ValidTarget(minion, VARS.Q.RANGE) and GetRastoyanie(minion, AnalBall) <= VARS.W.RADIUS then
+      n = n + 1
+    end
+  end
+  for _, minion in pairs(minionManager(MINION_JUNGLE, VARS.Q.RANGE, myHero, MINION_SORT_MAXHEALTH_DEC).objects) do
+    if ValidTarget(minion, VARS.Q.RANGE) and GetRastoyanie(minion, AnalBall) <= VARS.W.RADIUS then
+      n = n + 1
+    end
+  end
+  return n
+end
+
+function GetBestCircularFarmPosition(range, radius, objects)
+  local BestPos 
+  local BestHit = 0
+  for i, object in ipairs(objects) do
+    local hit = CountObjectsNearPos(object.pos or object, range, radius, objects)
+    if hit > BestHit then
+      BestHit = hit
+      BestPos = Vector(object)
+      if BestHit == #objects then
+        break
+      end
+    end
+  end
+  return BestPos, BestHit
+end
+
+function CountObjectsNearPos(pos, range, radius, objects)
+  local n = 0
+  for i, object in ipairs(objects) do
+    if GetDistanceSqr(pos, object) <= radius * radius then
+      n = n + 1
+    end
+  end
+  return n
+end
+
+function Lasthit()
+  if ((myHero.mana*100)/myHero.maxMana) <= Menu.Farm.Lasthit.lasthitQmana then return end
+  for _, minion in pairs(minionManager(MINION_ENEMY, VARS.Q.RANGE, myHero, MINION_SORT_HEALTH_ASC).objects) do
+    if ValidTarget(minion, VARS.Q.RANGE) then
+      local QDmg = GetQDamage(minion)
+      if Menu.Farm.Lasthit.lasthitQ and QDmg >= minion.health and CanCast(_Q) then
+        CastQ(minion)
+      end
+    end 
+  end
+end
+
+function Killsteal()
+  for i,enemy in pairs(GetEnemyHeroes()) do
+    if isValid(enemy, VARS.Q.RANGE*1.3) and not CheckInvul(enemy) then
+      local QDmg = GetQDamage(enemy)
+      local WDmg = GetQDamage(enemy)
+      if WDmg >= enemy.health and GetRastoyanie(AnalBall, enemy) < VARS.W.RADIUS and Menu.KS.ksW then
+        CastSpell(_W)
+      end
+      if QDmg >= enemy.health and not CheckInvul(enemy) and Menu.KS.ksQ then
+        CastQ(enemy)
+      end
+      if (QDmg + WDmg) >= enemy.health and not CheckInvul(enemy) and (Menu.KS.ksQ and Menu.KS.ksW) then
+        CastQ(enemy)
+      end
+    end
+  end
+end
+
+function AutoEonEngagers()
+  ENGAGES = true
+end
+
+function AutoRInterrupt()
+  INTERRUPTING = true
+end
+
+function AutoRN()
+  local hitcount, hit = CheckEnemiesHitByR()
+  if hitcount == nil then return end
+  if (hitcount >= (Menu.Auto.useR - 1)) and RastoyanieToClosestAlly(AnalBall) < VARS.Q.RANGE * 1.3 then
+    CastSpell(_R)
+  end 
+end
+
+function AutoWN()
+  local hitcount, hit = EnemyExistInBall()
+  if hitcount == nil then return end
+  if hitcount >= (Menu.Auto.useW - 1) then
+    CastSpell(_W)
+  end   
+end
+
+local pIntercept = 0
+ 
+function OnCastSpell(slot, startPos, endPos, targetUnit)
+    if slot == _R then
+        pIntercept = os.clock()
+    end
+end
+ 
+function OnSendPacket(packet)
+  if packet.header == 86 and pIntercept then
+    if CheckEnemiesHitByR() == 0 and Menu.Auto.blockR then
+      packet:Block()
+      pIntercept = false
+    end
+  end
+end
+
+function OnWndMsg(msg, key)
+  if msg == WM_LBUTTONDOWN and Menu.Combo.focus and not myHero.dead then
+    for i, pussy in ipairs(GetEnemyHeroes()) do
+      if GetRastoyanie(mousePos, pussy) <= 120 and isValid(pussy) and not CheckInvul(pussy) then
+        if FOCUSED ~= pussy then
+          FOCUSED = pussy
+          print("<font color = \"#B13070\">[HENTAI ORIANNA]</font> focus "..pussy.charName)
+        else
+          FOCUSED = nil
+          print("<font color = \"#B13070\">[HENTAI ORIANNA]</font> stop focus "..pussy.charName)
+        end
+      end
+    end
+  end
+end
+
+local invul = {"undyingrage", "sionpassivezombie", "aatroxpassivedeath", "chronoshift", "judicatorintervention"}
+
+function CheckInvul(unit)
+  for i,buff in pairs(invul) do
+    if TargetHaveBuff(buff, unit) then
+      return true
+    end
+  end
+    return false
+end
+
+function DrawSelectedTarget()
+  if not Menu.Combo.focus then return end
+  local target = FOCUSED
+  if target == nil then return end
+  if (target ~= nil and target.type == myHero.type and target.team ~= myHero.team) then
+    DrawFPSCircle(target.x, target.z, 150, ARGB(255,255,0,0), 4)
+    local posMinion = WorldToScreen(D3DXVECTOR3(target.x, target.y, target.z))
+    DrawText("FOCUS!", 20, posMinion.x, posMinion.y, ARGB(255,255,255,255))
+  end
+end
+
+function GetHentaiTarget(range)
+  local selectedTarget = FOCUSED
+  if selectedTarget ~= nil and Menu.Combo.focus then
+    if selectedTarget.type == myHero.type and selectedTarget.team ~= myHero.team and isValid(selectedTarget, range + 300) and not CheckInvul(enemy) then
+      return selectedTarget
+    end
+  end
+  local hentaiTarget = nil
+  local lessCast = 0
+  for i = 1, #GetEnemyHeroes() do
+    local enemy = GetEnemyHeroes()[i]
+    if isValid(enemy, range) and not CheckInvul(enemy) then
+      local kArmor = (100+enemy.magicArmor)/100
+      local kKillable = kArmor*enemy.health
+      if kKillable <= lessCast or lessCast == 0 then
+        hentaiTarget = enemy
+        lessCast = kKillable
+      end
+    end
+  end
+  return hentaiTarget
+end
+
+function isValid(object, range)
+  return object ~= nil and object.valid and object.visible and not object.dead and object.bInvulnerable == 0
+   and object.bTargetable and (range == nil or GetRastoyanie(object, myHero) <= range)
+end
+
+function AutoIgnite()
+  if igniteslot == nil then return end
+  for i,enemy in pairs(GetEnemyHeroes()) do
+    if not enemy.dead and enemy.visible then
+      local rastoyanie = math.sqrt((enemy.x-myHero.x)*(enemy.x-myHero.x) + (enemy.z-myHero.z)*(enemy.z-myHero.z))
+      if rastoyanie <= 600 then
+        if ((50 + (20*myHero.level)) >= enemy.health and igniteslot ~= nil and myHero:CanUseSpell(igniteslot) == READY and
+          ValidTarget(enemy, 600)) then 
+          CastSpell(igniteslot, enemy)
+        end
+      end
+    end
+  end
+end
+
+function FindItems()
+  GetBolt()
+end
+
+function GetBolt()
+  local slot = GetItem(ATTACKITEMS[1])
+  if (slot ~= nil) then
+    BOLT = true
+    BOLTSLOT = slot
+  else
+    BOLT = false
+  end
+end
+
+function CastBOLT(unit)
+  if BOLT then
+    CastSpell(BOLTSLOT, unit)
+  end
+end
+
+function AutoPotion()
+  for i=1, 5 do
+    local pot = GetItem(POTS[i])
+    if (pot ~= nil) then
+      if (((myHero.health*100)/myHero.maxHealth) <= Menu.Auto.autoPotsHealth and not REGEN) then
+        CastSpell(pot)
+      end
+    end
+  end
+end
+
+function GetQDamage(unit)
+  local Qlvl = myHero:GetSpellData(_Q).level
+  if Qlvl < 1 then return 0 end
+  local QDmg = {60, 90, 120, 150, 180}
+  local QDmgMod = 0.5
+  local DmgRaw = QDmg[Qlvl] + myHero.ap * QDmgMod
+  local Dmg = myHero:CalcMagicDamage(unit, DmgRaw)
+  return Dmg
+end
+
+function GetWDamage(unit)
+  local Wlvl = myHero:GetSpellData(_W).level
+  if Wlvl < 1 then return 0 end
+  local WDmg = {70, 115, 160, 205, 250}
+  local WDmgMod = 0.7
+  local DmgRaw = WDmg[Wlvl] + myHero.ap * WDmgMod
+  local Dmg = myHero:CalcMagicDamage(unit, DmgRaw)
+  return Dmg
+end
+
+function GetEDamage(unit)
+  local Elvl = myHero:GetSpellData(_E).level
+  if Elvl < 1 then return 0 end
+  local EDmg = {60, 90, 120, 150, 180}
+  local EDmgMod = 0.3
+  local DmgRaw = EDmg[Elvl] + myHero.ap * EDmgMod
+  local Dmg = myHero:CalcMagicDamage(unit, DmgRaw)
+  return Dmg
+end
+
+function GetRDamage(unit)
+  local Rlvl = myHero:GetSpellData(_R).level
+  if Rlvl < 1 then return 0 end
+  local RDmg = {150, 225, 300}
+  local RDmgMod = 0.7
+  local DmgRaw = RDmg[Rlvl] + myHero.ap * RDmgMod
+  local Dmg = myHero:CalcMagicDamage(unit, DmgRaw)
+  return Dmg
+end
+
+function CastQ(unit)
+  if unit == nil then return end
+  local Speed = VARS.Q.SPEED*1.5
+
+  if VP ~= nil then
+    local CastPosition, HitChance, Position = VP:GetLineCastPosition(unit, VARS.Q.DELAY, VARS.Q.RADIUS, math.huge, Speed, AnalBall, false)
+    local CastPoint = Position
+    if HitChance < 2 then return end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      target2 = GetHentaiTarget(VARS.Q.RANGE)
+      if target2 then
+        CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target2, VARS.Q.DELAY, VARS.Q.RADIUS, math.huge, Speed, AnalBall)
+        CastPoint = CastPosition
+      else
+        do return end
+      end
+    end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      do return end
+    end
+    if CanCast(_E) and (Menu.Key.combo or Menu.Key.harras) and Menu.Combo.useEQ then
+      local TravelTime = GetRastoyanie(AnalBall, CastPoint) / VARS.Q.SPEED
+      local MinTravelTime = GetRastoyanie(myHero, CastPoint) / VARS.Q.SPEED + GetRastoyanie(myHero, AnalBall) / VARS.E.SPEED
+      local Etarget = myHero
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, VARS.E.RANGE) then
+          local time = GetRastoyanie(ally, CastPoint) / VARS.Q.SPEED + GetRastoyanie(ally, AnalBall) / VARS.E.SPEED
+          if time < MinTravelTime then
+            MinTravelTime = time
+            Etarget = ally
+          end
+        end
+      end
+      if MinTravelTime < TravelTime and (not Etarget.isMe or GetRastoyanie(AnalBall, myHero) > 100) and GetRastoyanie(myHero, Etarget) < GetRastoyanie(myHero, CastPoint) then
+        CastE(Etarget)
+        do return end
+      end
+    end
+    if GetDistanceSqr(CastPoint) < VARS.Q.RANGE * VARS.Q.RANGE then
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    else
+      CastPoint = Vector(myHero) + VARS.Q.RANGE * (Vector(CastPoint) - Vector(myHero)):normalized()
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    end
+  end
+
+  if DP ~= nil then
+    DPQQ = DP:bindSS("oriQ", DPQ, 75)
+    local state, CastPosition, HitChance = DP:predict("oriQ", unit, AnalBall)
+    local target = DPTarget(unit)
+    local positionA = target:getPath():getPosAtTime(VARS.Q.DELAY*1000)
+    local Position = positionA
+    local CastPoint = Position
+    print(HitChance)
+    if HitChance < Menu.Prediction.QHC then return end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      target2 = GetHentaiTarget(VARS.Q.RANGE)
+      if target2 then
+        DPQQ = DP:bindSS("oriQA", DPQA, 75)
+        local state, CastPosition, HitChance = DP:predict("oriQA", target2, AnalBall)
+        CastPoint = CastPosition
+      else
+        do return end
+      end
+    end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      do return end
+    end
+    if CanCast(_E) and (Menu.Key.combo or Menu.Key.harras) and Menu.Combo.useEQ then
+      local TravelTime = GetRastoyanie(AnalBall, CastPoint) / VARS.Q.SPEED
+      local MinTravelTime = GetRastoyanie(myHero, CastPoint) / VARS.Q.SPEED + GetRastoyanie(myHero, AnalBall) / VARS.E.SPEED
+      local Etarget = myHero
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, VARS.E.RANGE) then
+          local time = GetRastoyanie(ally, CastPoint) / VARS.Q.SPEED + GetRastoyanie(ally, AnalBall) / VARS.E.SPEED
+          if time < MinTravelTime then
+            MinTravelTime = time
+            Etarget = ally
+          end
+        end
+      end
+      if MinTravelTime < TravelTime and (not Etarget.isMe or GetRastoyanie(AnalBall, myHero) > 100) and GetRastoyanie(myHero, Etarget) < GetRastoyanie(myHero, CastPoint) then
+        CastE(Etarget)
+        do return end
+      end
+    end
+    if GetDistanceSqr(CastPoint) < VARS.Q.RANGE * VARS.Q.RANGE then
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    else
+      CastPoint = Vector(myHero) + VARS.Q.RANGE * (Vector(CastPoint) - Vector(myHero)):normalized()
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    end
+  end
+
+  if FHPred and Menu.Prediction.activePred == 3 then
+    local CastPosition, HitChance, info = FHPrediction.GetPrediction(oriannaQhuge, unit, AnalBall)
+    local positionA = FHPrediction.PredictPosition(unit, VARS.Q.DELAY)
+    local Position = positionA
+    local CastPoint = Position
+    if HitChance <= 0 then return end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      target2 = GetHentaiTarget(VARS.Q.RANGE)
+      if target2 then
+        local CastPosition, HitChance, info = FHPrediction.GetPrediction(oriannaQhuge, target2, AnalBall)
+        CastPoint = CastPosition
+      else
+        do return end
+      end
+    end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      do return end
+    end
+    if CanCast(_E) and (Menu.Key.combo or Menu.Key.harras) and Menu.Combo.useEQ then
+      local TravelTime = GetRastoyanie(AnalBall, CastPoint) / VARS.Q.SPEED
+      local MinTravelTime = GetRastoyanie(myHero, CastPoint) / VARS.Q.SPEED + GetRastoyanie(myHero, AnalBall) / VARS.E.SPEED
+      local Etarget = myHero
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, VARS.E.RANGE) then
+          local time = GetRastoyanie(ally, CastPoint) / VARS.Q.SPEED + GetRastoyanie(ally, AnalBall) / VARS.E.SPEED
+          if time < MinTravelTime then
+            MinTravelTime = time
+            Etarget = ally
+          end
+        end
+      end
+      if MinTravelTime < TravelTime and (not Etarget.isMe or GetRastoyanie(AnalBall, myHero) > 100) and GetRastoyanie(myHero, Etarget) < GetRastoyanie(myHero, CastPoint) then
+        CastE(Etarget)
+        do return end
+      end
+    end
+    if GetDistanceSqr(CastPoint) < VARS.Q.RANGE * VARS.Q.RANGE then
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    else
+      CastPoint = Vector(myHero) + VARS.Q.RANGE * (Vector(CastPoint) - Vector(myHero)):normalized()
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    end
+  end
+
+  if KP and Menu.Prediction.activePred == 4 then
+    local CastPosition, HitChance = KP:GetPrediction(oriannaQhuge, unit, AnalBall)
+    local positionA = CastPosition
+    local Position = positionA
+    local CastPoint = Position
+    if HitChance <= Menu.Prediction.QKPHC then return end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      target2 = GetHentaiTarget(VARS.Q.RANGE)
+      if target2 then
+        local CastPosition, HitChance = KP:GetPrediction(oriannaQhuge, target2, AnalBall)
+        CastPoint = CastPosition
+      else
+        do return end
+      end
+    end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      do return end
+    end
+    if CanCast(_E) and (Menu.Key.combo or Menu.Key.harras) and Menu.Combo.useEQ then
+      local TravelTime = GetRastoyanie(AnalBall, CastPoint) / VARS.Q.SPEED
+      local MinTravelTime = GetRastoyanie(myHero, CastPoint) / VARS.Q.SPEED + GetRastoyanie(myHero, AnalBall) / VARS.E.SPEED
+      local Etarget = myHero
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, VARS.E.RANGE) then
+          local time = GetRastoyanie(ally, CastPoint) / VARS.Q.SPEED + GetRastoyanie(ally, AnalBall) / VARS.E.SPEED
+          if time < MinTravelTime then
+            MinTravelTime = time
+            Etarget = ally
+          end
+        end
+      end
+      if MinTravelTime < TravelTime and (not Etarget.isMe or GetRastoyanie(AnalBall, myHero) > 100) and GetRastoyanie(myHero, Etarget) < GetRastoyanie(myHero, CastPoint) then
+        CastE(Etarget)
+        do return end
+      end
+    end
+    if GetDistanceSqr(CastPoint) < VARS.Q.RANGE * VARS.Q.RANGE then
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    else
+      CastPoint = Vector(myHero) + VARS.Q.RANGE * (Vector(CastPoint) - Vector(myHero)):normalized()
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    end
+  end
+
+  if HP and Menu.Prediction.activePred == 5 then
+    local CastPosition, HitChance = HP:GetPredict(hp_q, unit, AnalBall)
+    local positionA = HP:PredictPos(unit, VARS.Q.DELAY)
+    local Position = positionA
+    local CastPoint = Position
+    if HitChance < Menu.Prediction.QHPHC then return end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      target2 = GetHentaiTarget(VARS.Q.RANGE)
+      if target2 then
+        local CastPosition, HitChance = HP:GetPredict(hp_q, target2, AnalBall)
+        CastPoint = CastPosition
+      else
+        do return end
+      end
+    end
+    if GetRastoyanie(myHero, Position) > (VARS.Q.RANGE + VARS.W.RADIUS + 45) then
+      do return end
+    end
+    if CanCast(_E) and (Menu.Key.combo or Menu.Key.harras) and Menu.Combo.useEQ then
+      local TravelTime = GetRastoyanie(AnalBall, CastPoint) / VARS.Q.SPEED
+      local MinTravelTime = GetRastoyanie(myHero, CastPoint) / VARS.Q.SPEED + GetRastoyanie(myHero, AnalBall) / VARS.E.SPEED
+      local Etarget = myHero
+      for i, ally in ipairs(GetAllyHeroes()) do
+        if isValid(ally, VARS.E.RANGE) then
+          local time = GetRastoyanie(ally, CastPoint) / VARS.Q.SPEED + GetRastoyanie(ally, AnalBall) / VARS.E.SPEED
+          if time < MinTravelTime then
+            MinTravelTime = time
+            Etarget = ally
+          end
+        end
+      end
+      if MinTravelTime < TravelTime and (not Etarget.isMe or GetRastoyanie(AnalBall, myHero) > 100) and GetRastoyanie(myHero, Etarget) < GetRastoyanie(myHero, CastPoint) then
+        CastE(Etarget)
+        do return end
+      end
+    end
+    if GetDistanceSqr(CastPoint) < VARS.Q.RANGE * VARS.Q.RANGE then
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    else
+      CastPoint = Vector(myHero) + VARS.Q.RANGE * (Vector(CastPoint) - Vector(myHero)):normalized()
+      CastSpell(_Q, CastPoint.x, CastPoint.z)
+    end
+  end
+end
+
+function CastW()
+  local hitcount, hit = EnemyExistInBall()
+  if hitcount == nil then return end
+  if hitcount >= 1 then
+    CastSpell(_W)
+  end
+end
+
+function CastE(unit)
+  if unit == nil then return end
+  CastSpell(_E, unit)
+end
+
+function CastAggroE(target, n)
+  local hitcount, hit = CheckEnemiesHitByE(target)
+  if hitcount == nil then return end
+  if hitcount >= n then
+    CastE(target)
+  end
+end
+
+function CastR(unit)
+  if unit == nil then return end
+  if VP ~= nil then
+    local position = VP:GetPredictedPos(unit, VARS.R.DELAY)
+    if GetRastoyanie(position, AnalBall) < VARS.R.RADIUS and GetRastoyanie(unit, AnalBall) < VARS.R.RADIUS then
+      CastSpell(_R)
+    end
+  end
+  if DP ~= nil then
+    local target = DPTarget(unit)
+    local positionA = target:getPath():getPosAtTime(VARS.R.DELAY*1000)
+    local position = positionA
+    if GetRastoyanie(position, AnalBall) < VARS.R.RADIUS and GetRastoyanie(unit, AnalBall) < VARS.R.RADIUS then
+      CastSpell(_R)
+    end
+  end
+  if FHPred and Menu.Prediction.activePred == 3 then
+    local positionA = FHPrediction.PredictPosition(unit, VARS.R.DELAY)
+    local position = positionA
+    if GetRastoyanie(position, AnalBall) < VARS.R.RADIUS and GetRastoyanie(unit, AnalBall) < VARS.R.RADIUS then
+      CastSpell(_R)
+    end
+  end
+  if KP and Menu.Prediction.activePred == 4 then
+    local positionA = KP:GetPos(unit, VARS.R.DELAY)
+    if not positionA then return end
+    local position = positionA
+    if GetRastoyanie(position, AnalBall) < (VARS.R.RADIUS+150) and GetRastoyanie(unit, AnalBall) < (VARS.R.RADIUS+150) then
+      CastSpell(_R)
+    end
+  end
+  if HP and Menu.Prediction.activePred == 5 then
+    local positionA = HP:PredictPos(unit, VARS.R.DELAY)
+    if not positionA then return end
+    local position = positionA
+    if GetRastoyanie(position, AnalBall) < (VARS.R.RADIUS+150) and GetRastoyanie(unit, AnalBall) < (VARS.R.RADIUS+150) then
+      CastSpell(_R)
+    end
+  end
+end
+
+function PizdiDal(unit)
+  local points = {}
+  local targets = {}
+  if VP ~= nil then
+    local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(unit, VARS.Q.DELAY, VARS.Q.RADIUS, VARS.Q.RANGE, VARS.Q.SPEED, AnalBall)
+    table.insert(points, Position)
+    table.insert(targets, unit)
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      if isValid(enemy, VARS.Q.RANGE + VARS.R.RADIUS) and enemy.networkID ~= unit.networkID then
+        CastPosition,  HitChance,  Position = VP:GetLineCastPosition(enemy, VARS.Q.DELAY, VARS.Q.RADIUS, VARS.Q.RADIUS, VARS.Q.SPEED, AnalBall)
+        table.insert(points, Position)
+        table.insert(targets, enemy)
+      end
+    end
+    for o = 1, 5 do
+      local MECa = MEC(points)
+      local Circle = MECa:Compute()
+
+      if Circle.radius <= VARS.R.RADIUS and #points >= 3 and CanCast(_R) then
+        return Circle.center, 3
+      end
+
+      if Circle.radius <= VARS.W.RADIUS and #points >= 2 and CanCast(_W) then
+        return Circle.center, 2
+      end
+
+      if #points == 1 then
+        return Circle.center, 1
+      elseif Circle.radius <= (VARS.Q.RANGE + 50) and #points >= 1 then
+        return Circle.center, 2
+      end
+
+      local Dist = -1
+      local MyPoint = points[1]
+      local index = 0
+
+      for i=2, #points, 1 do
+        if GetRastoyanie(points[i], MyPoint) >= Dist then
+          Dist = GetRastoyanie(points[i], MyPoint)
+          index = i
+        end
+      end
+      if index > 0 then
+        table.remove(points, index)
+      end
+    end
+  end
+
+  if DP ~= nil then
+    local state, CastPosition, HitChance = DP:predict(nil,unit,AnalBall,SkillShot.TYPE.LINE,VARS.Q.SPEED,VARS.Q.RANGE,VARS.Q.RADIUS,VARS.Q.DELAY*1000,0,{Minions = false,Champions = false})
+    local target = DPTarget(unit)
+    local positionA = target:getPath():getPosAtTime(VARS.Q.DELAY*1000)
+    local Position = positionA
+    local CastPoint = Position
+    table.insert(points, Position)
+    table.insert(targets, unit)
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      if isValid(enemy, VARS.Q.RANGE + VARS.R.RADIUS) and enemy.networkID ~= unit.networkID then
+        local state, CastPosition, HitChance = DP:predict(nil,enemy,AnalBall,SkillShot.TYPE.LINE,VARS.Q.SPEED,VARS.Q.RANGE,VARS.Q.RADIUS,VARS.Q.DELAY*1000,0,{Minions = false,Champions = false})
+        local target = DPTarget(unit)
+        local positionA = target:getPath():getPosAtTime(VARS.Q.DELAY*1000)
+        local Position = positionA
+        local CastPoint = Position
+        table.insert(points, Position)
+        table.insert(targets, enemy)
+      end
+    end
+
+    for o = 1, 5 do
+      local MECa = MEC(points)
+      local Circle = MECa:Compute()
+
+      if Circle.radius <= VARS.R.RADIUS and #points >= 3 and CanCast(_R) then
+        return Circle.center, 3
+      end
+
+      if Circle.radius <= VARS.W.RADIUS and #points >= 2 and CanCast(_W) then
+        return Circle.center, 2
+      end
+
+      if #points == 1 then
+        return Circle.center, 1
+      elseif Circle.radius <= (VARS.Q.RANGE + 50) and #points >= 1 then
+        return Circle.center, 2
+      end
+
+      local Dist = -1
+      local MyPoint = points[1]
+      local index = 0
+
+      for i=2, #points, 1 do
+        if GetRastoyanie(points[i], MyPoint) >= Dist then
+          Dist = GetRastoyanie(points[i], MyPoint)
+          index = i
+        end
+      end
+      if index > 0 then
+        table.remove(points, index)
+      end
+    end
+  end
+
+  if FHPred and Menu.Prediction.activePred == 3 then
+    local CastPosition, HitChance, info = FHPrediction.GetPrediction(oriannaQhuge, unit, AnalBall)
+    local positionA = FHPrediction.PredictPosition(unit, VARS.Q.DELAY)
+    local Position = positionA
+    local CastPoint = Position
+    table.insert(points, Position)
+    table.insert(targets, unit)
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      if isValid(enemy, VARS.Q.RANGE + VARS.R.RADIUS) and enemy.networkID ~= unit.networkID then
+        local CastPosition, HitChance, info = FHPrediction.GetPrediction(oriannaQhuge, enemy, AnalBall)
+        local positionA = FHPrediction.PredictPosition(enemy, VARS.Q.DELAY)
+        local Position = positionA
+        local CastPoint = Position
+        table.insert(points, Position)
+        table.insert(targets, enemy)
+      end
+    end
+
+    for o = 1, 5 do
+      local MECa = MEC(points)
+      local Circle = MECa:Compute()
+
+      if Circle.radius <= VARS.R.RADIUS and #points >= 3 and CanCast(_R) then
+        return Circle.center, 3
+      end
+
+      if Circle.radius <= VARS.W.RADIUS and #points >= 2 and CanCast(_W) then
+        return Circle.center, 2
+      end
+
+      if #points == 1 then
+        return Circle.center, 1
+      elseif Circle.radius <= (VARS.Q.RANGE + 50) and #points >= 1 then
+        return Circle.center, 2
+      end
+
+      local Dist = -1
+      local MyPoint = points[1]
+      local index = 0
+
+      for i=2, #points, 1 do
+        if GetRastoyanie(points[i], MyPoint) >= Dist then
+          Dist = GetRastoyanie(points[i], MyPoint)
+          index = i
+        end
+      end
+      if index > 0 then
+        table.remove(points, index)
+      end
+    end
+  end
+
+  if KP and Menu.Prediction.activePred == 4 then
+    local CastPosition, HitChance = KP:GetPrediction(oriannaQhuge, unit, AnalBall)
+    local positionA = CastPosition
+    if not positionA then return end
+    local Position = positionA
+    local CastPoint = Position
+    table.insert(points, Position)
+    table.insert(targets, unit)
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      if isValid(enemy, VARS.Q.RANGE + VARS.R.RADIUS) and enemy.networkID ~= unit.networkID then
+        local CastPosition, HitChance = KP:GetPrediction(oriannaQhuge, enemy, AnalBall)
+        local positionA = CastPosition
+        local Position = positionA
+        local CastPoint = Position
+        table.insert(points, Position)
+        table.insert(targets, enemy)
+      end
+    end
+
+    for o = 1, 5 do
+      local MECa = MEC(points)
+      local Circle = MECa:Compute()
+
+      if Circle.radius <= VARS.R.RADIUS and #points >= 3 and CanCast(_R) then
+        return Circle.center, 3
+      end
+
+      if Circle.radius <= VARS.W.RADIUS and #points >= 2 and CanCast(_W) then
+        return Circle.center, 2
+      end
+
+      if #points == 1 then
+        return Circle.center, 1
+      elseif Circle.radius <= (VARS.Q.RANGE + 50) and #points >= 1 then
+        return Circle.center, 2
+      end
+
+      local Dist = -1
+      local MyPoint = points[1]
+      local index = 0
+
+      for i=2, #points, 1 do
+        if GetRastoyanie(points[i], MyPoint) >= Dist then
+          Dist = GetRastoyanie(points[i], MyPoint)
+          index = i
+        end
+      end
+      if index > 0 then
+        table.remove(points, index)
+      end
+    end
+  end
+
+  if HP and Menu.Prediction.activePred == 5 then
+    local CastPosition, HitChance = HP:GetPredict(hp_q, unit, AnalBall)
+    local positionA = CastPosition
+    if not positionA then return end
+    local Position = positionA
+    local CastPoint = Position
+    table.insert(points, Position)
+    table.insert(targets, unit)
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      if isValid(enemy, VARS.Q.RANGE + VARS.R.RADIUS) and enemy.networkID ~= unit.networkID then
+        local CastPosition, HitChance = HP:GetPredict(hp_q, enemy, AnalBall)
+        local positionA = CastPosition
+        local Position = positionA
+        local CastPoint = Position
+        table.insert(points, Position)
+        table.insert(targets, enemy)
+      end
+    end
+
+    for o = 1, 5 do
+      local MECa = MEC(points)
+      local Circle = MECa:Compute()
+
+      if Circle.radius <= VARS.R.RADIUS and #points >= 3 and CanCast(_R) then
+        return Circle.center, 3
+      end
+
+      if Circle.radius <= VARS.W.RADIUS and #points >= 2 and CanCast(_W) then
+        return Circle.center, 2
+      end
+
+      if #points == 1 then
+        return Circle.center, 1
+      elseif Circle.radius <= (VARS.Q.RANGE + 50) and #points >= 1 then
+        return Circle.center, 2
+      end
+
+      local Dist = -1
+      local MyPoint = points[1]
+      local index = 0
+
+      for i=2, #points, 1 do
+        if GetRastoyanie(points[i], MyPoint) >= Dist then
+          Dist = GetRastoyanie(points[i], MyPoint)
+          index = i
+        end
+      end
+      if index > 0 then
+        table.remove(points, index)
+      end
+    end
+  end
+end
+
+function RastoyanieToClosestAlly(p)
+  local d = GetRastoyanie(p, myHero)
+  for i, ally in ipairs(GetAllyHeroes()) do
+    if isValid(ally, math.huge) then
+      local dist = GetRastoyanie(p, ally)
+      if dist < d then
+        d = dist
+      end
+    end
+  end
+  return d
+end
+
+function CountAllyHeroInRange(range, point)
+  local n = 0
+  for i, ally in ipairs(GetAllyHeroes()) do
+    if isValid(ally, math.huge) and GetDistanceSqr(point, ally) <= range * range then
+      n = n + 1
+    end
+  end
+  return n
+end
+
+function EnemyExistInBall()
+  local uMad = {}
+  if VP ~= nil then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = VP:GetPredictedPos(enemy, VARS.W.DELAY)
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= VARS.W.RADIUS and GetRastoyanie(enemy, AnalBall) <= VARS.W.RADIUS then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if DP ~= nil then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local target = DPTarget(enemy)
+      local position = target:getPath():getPosAtTime(VARS.W.DELAY*1000)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= VARS.W.RADIUS and GetRastoyanie(enemy, AnalBall) <= VARS.W.RADIUS then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if FHPred and Menu.Prediction.activePred == 3 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = FHPrediction.PredictPosition(enemy, VARS.W.DELAY)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= VARS.W.RADIUS and GetRastoyanie(enemy, AnalBall) <= VARS.W.RADIUS then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if KP and Menu.Prediction.activePred == 4 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = KP:GetPos(enemy, VARS.W.DELAY)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= (VARS.W.RADIUS+150) and GetRastoyanie(enemy, AnalBall) <= (VARS.W.RADIUS+150) then
+        table.insert(uMad, enemy)
+      end
+    end
+  end 
+
+  if HP and Menu.Prediction.activePred == 5 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = HP:PredictPos(enemy, VARS.W.DELAY)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= (VARS.W.RADIUS) and GetRastoyanie(enemy, AnalBall) <= (VARS.W.RADIUS) then
+        table.insert(uMad, enemy)
+      end
+    end
+  end 
+  return #uMad, uMad
+end
+
+function CheckEnemiesHitByR()
+  local uMad = {}
+  if VP ~= nil then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = VP:GetPredictedPos(enemy, VARS.R.DELAY)
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= VARS.R.RADIUS and GetRastoyanie(enemy, AnalBall) <= 1.25 * VARS.R.RADIUS  then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if DP ~= nil then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local target = DPTarget(enemy)
+      local position = target:getPath():getPosAtTime(VARS.R.DELAY*1000)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= VARS.R.RADIUS and GetRastoyanie(enemy, AnalBall) <= 1.25 * VARS.R.RADIUS  then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if FHPred and Menu.Prediction.activePred == 3 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = FHPrediction.PredictPosition(enemy, VARS.R.DELAY)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= VARS.R.RADIUS and GetRastoyanie(enemy, AnalBall) <= 1.25 * VARS.R.RADIUS  then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if KP and Menu.Prediction.activePred == 4 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = KP:GetPos(enemy, VARS.R.DELAY)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= (VARS.R.RADIUS+150) and GetRastoyanie(enemy, AnalBall) <= 1.25 * (VARS.R.RADIUS+150)  then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+
+  if HP and Menu.Prediction.activePred == 5 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local position = HP:PredictPos(enemy, VARS.R.DELAY)
+      if position == nil then return end
+      if isValid(enemy) and GetRastoyanie(position, AnalBall) <= (VARS.R.RADIUS) and GetRastoyanie(enemy, AnalBall) <= 1.25 * (VARS.R.RADIUS)  then
+        table.insert(uMad, enemy)
+      end
+    end
+  end
+  return #uMad, uMad
+end
+
+function CheckEnemiesHitByE(To)
+  local enemieshit = {}
+  local StartPoint = Vector(AnalBall.x, 0, AnalBall.z)
+  local EndPoint = Vector(To.x, 0, To.z)
+
+  if VP ~= nil then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local cp, hc, position = VP:GetLineCastPosition(enemy, VARS.E.DELAY, VARS.E.RADIUS, math.huge, VARS.E.SPEED, StartPoint)
+      if position then
+        local PointInLine, tmp, isOnSegment = VectorPointProjectionOnLineSegment(StartPoint, EndPoint, position)
+        if ValidTarget(enemy) and isOnSegment and GetDistance(PointInLine, position) <= (VARS.E.RADIUS + 45) and GetDistance(PointInLine, enemy) < (VARS.E.RADIUS) * 2 + 30 then
+          table.insert(enemieshit, enemy)
+        end
+      end
+    end
+  end
+
+  if DP ~= nil then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local state, cp, hc = DP:predict(nil,enemy,StartPoint,SkillShot.TYPE.LINE,VARS.E.SPEED,math.huge,VARS.E.RADIUS,VARS.E.DELAY*1000,0,{Minions = false,Champions = false})
+      local target = DPTarget(enemy)
+      local positionA = target:getPath():getPosAtTime(VARS.E.DELAY*1000)
+      local position = positionA
+      if position then
+        local PointInLine, tmp, isOnSegment = VectorPointProjectionOnLineSegment(StartPoint, EndPoint, position)
+        if ValidTarget(enemy) and isOnSegment and GetDistance(PointInLine, position) <= (VARS.E.RADIUS + 45) and GetDistance(PointInLine, enemy) < (VARS.E.RADIUS) * 2 + 30 then
+          table.insert(enemieshit, enemy)
+        end
+      end
+    end
+  end
+
+  if FHPred and Menu.Prediction.activePred == 3 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local cp, hc, info = FHPrediction.GetPrediction(oriannaEhuge, enemy, StartPoint)
+      local position = FHPrediction.PredictPosition(enemy, VARS.E.DELAY)
+      if position then
+        local PointInLine, tmp, isOnSegment = VectorPointProjectionOnLineSegment(StartPoint, EndPoint, position)
+        if ValidTarget(enemy) and isOnSegment and GetDistance(PointInLine, position) <= (VARS.E.RADIUS + 45) and GetDistance(PointInLine, enemy) < (VARS.E.RADIUS) * 2 + 30 then
+          table.insert(enemieshit, enemy)
+        end
+      end
+    end
+  end
+
+  if KP and Menu.Prediction.activePred == 4 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local cp, hc = KP:GetPrediction(oriannaEhuge, enemy, StartPoint)
+      local position = KP:GetPos(enemy, VARS.E.DELAY)
+      if position then
+        local PointInLine, tmp, isOnSegment = VectorPointProjectionOnLineSegment(StartPoint, EndPoint, position)
+        if ValidTarget(enemy) and isOnSegment and GetDistance(PointInLine, position) <= (VARS.E.RADIUS + 45) and GetDistance(PointInLine, enemy) < (VARS.E.RADIUS) * 2 + 30 then
+          table.insert(enemieshit, enemy)
+        end
+      end
+    end
+  end
+
+  if HP and Menu.Prediction.activePred == 5 then
+    for i, enemy in ipairs(GetEnemyHeroes()) do
+      local cp, hc = HP:GetPredict(hp_e, enemy, StartPoint)
+      local position = HP:PredictPos(enemy, VARS.E.DELAY)
+      if position then
+        local PointInLine, tmp, isOnSegment = VectorPointProjectionOnLineSegment(StartPoint, EndPoint, position)
+        if ValidTarget(enemy) and isOnSegment and GetDistance(PointInLine, position) <= (VARS.E.RADIUS + 45) and GetDistance(PointInLine, enemy) < (VARS.E.RADIUS) * 2 + 30 then
+          table.insert(enemieshit, enemy)
+        end
+      end
+    end
+  end
+  return #enemieshit, enemieshit
+end
+
+function OnProcessSpell(unit, spell)
+  if unit.isMe and spell.name:lower():find("orianaizunacommand") then
+    AnalAction = true
+    DelayAction(function(p) AnalBall = Vector(p) end, GetRastoyanie(spell.endPos, AnalBall) / VARS.Q.SPEED - GetLatency()/1000 - 0.35, {Vector(spell.endPos)})
+  end
+  
+  if unit.isMe and spell.name:lower():find("orianaredactcommand") then
+    AnalAction = true
+    AnalBall = spell.target
+  end
+  if INTERRUPTING and unit and spell then
+    if unit.team ~= myHero.team and PussyOut[spell.name] ~= nil then
+      if GetRastoyanie(unit, AnalBall) < VARS.R.RADIUS then
+        local hitcount, hit = CheckEnemiesHitByR()
+        if hitcount ~= nil then
+          if hitcount >= 1 then
+            CastSpell(_R)
+          end
+        end
+      elseif GetRastoyanie(unit, myHero) <= VARS.Q.RANGE and CanCast(_Q) then
+        CastQ(unit)
+        DelayAction(function() CastSpell(_R) end, 0.5)
+      end
+    end
+  end
+  if ENGAGES and unit and spell then
+    if unit.team == myHero.team and EngagersArray[spell.name] ~= nil and GetRastoyanie(myHero, unit) <= VARS.E.RANGE and CanCast(_E) then
+      CastSpell(_E, unit)
+    end
+  end
+end
+
+function OnCreateObj(obj)
+  if obj.name:lower():find("yomu_ring_green") then
+    AnalBall = obj
+    AnalAction = false
+  end      
+  
+  if (obj.name:lower():find("orianna_ball_flash_reverse")) then
+    AnalBall = myHero
+    AnalAction = false
+  end
+end
+
+function Buff_Add(unit, target, buff)
+  if unit ~= nil then
+    if unit.team == myHero.team and buff.name:lower():find("orianaghostself") then
+      AnalAction = false
+      AnalBall = unit
+    end
+  end
+  
+  for i=1, 5 do
+    if (buff.name == POTS[i] and unit.isMe) then
+      REGEN = true
+    end
+  end
+end
+
+function Buff_Rem(unit, buff)
+  for i=1, 5 do
+    if (buff.name == POTS[i] and unit.isMe) then
+      REGEN = false
+    end
+  end
+end
+
+function FindSlotByName(name)
+  if name ~= nil then
+    for i=0, 12 do
+      if string.lower(myHero:GetSpellData(i).name) == string.lower(name) then
+        return i
+      end
+    end
+  end  
+  return nil
+end
+
+function GetItem(name)
+  local slot = FindSlotByName(name)
+  return slot 
+end
+
+function DrawLineA(x1, y1, x2, y2, color)
+  DrawLine(x1, y1, x2, y2, 1, color)
+end
+
+function DrawFPSCircle(xCoordinate, zCoordinate, radius, color, quality)
+  DrawCircle3D(xCoordinate, myHero.y, zCoordinate, radius, 2, color, quality)
+end
+
+function GetHPBarPos(enemy)
+  enemy.barData = {PercentageOffset = {x = -0.05, y = 0}}
+  local barPos = GetUnitHPBarPos(enemy)
+  local barPosOffset = GetUnitHPBarOffset(enemy)
+  local barOffset = { x = enemy.barData.PercentageOffset.x, y = enemy.barData.PercentageOffset.y }
+  local barPosPercentageOffset = { x = enemy.barData.PercentageOffset.x, y = enemy.barData.PercentageOffset.y }
+  local BarPosOffsetX = -50
+  local BarPosOffsetY = 46
+  local CorrectionY = 39
+  local StartHpPos = 31 
+  barPos.x = math.floor(barPos.x + (barPosOffset.x - 0.5 + barPosPercentageOffset.x) * BarPosOffsetX + StartHpPos)
+  barPos.y = math.floor(barPos.y + (barPosOffset.y - 0.5 + barPosPercentageOffset.y) * BarPosOffsetY + CorrectionY)
+  local StartPos = Vector(barPos.x , barPos.y, 0)
+  local EndPos = Vector(barPos.x + 108 , barPos.y , 0)    
+  return Vector(StartPos.x, StartPos.y, 0), Vector(EndPos.x, EndPos.y, 0)
+end
+
+function DrawLineHPBar(damage, text, unit, enemyteam)
+  if unit.dead or not unit.visible then return end
+  local p = WorldToScreen(D3DXVECTOR3(unit.x, unit.y, unit.z))
+  if not OnScreen(p.x, p.y) then return end
+  local thedmg = 0
+  local line = 2
+  local linePosA  = {x = 0, y = 0 }
+  local linePosB  = {x = 0, y = 0 }
+  local TextPos   = {x = 0, y = 0 }
+
+  if damage >= unit.health then
+    thedmg = unit.health - 1
+    text = "KILLABLE!"
+  else
+    thedmg = damage
+    text = "Possible Damage"
+  end
+
+  thedmg = math.round(thedmg)
+
+  local StartPos, EndPos = GetHPBarPos(unit)
+  local Real_X = StartPos.x + 24
+  local Offs_X = (Real_X + ((unit.health - thedmg) / unit.maxHealth) * (EndPos.x - StartPos.x - 2))
+  if Offs_X < Real_X then Offs_X = Real_X end 
+  local mytrans = 350 - math.round(255*((unit.health-thedmg)/unit.maxHealth))
+  if mytrans >= 255 then mytrans=254 end
+  local my_bluepart = math.round(400*((unit.health-thedmg)/unit.maxHealth))
+  if my_bluepart >= 255 then my_bluepart=254 end
+
+  if enemyteam then
+    linePosA.x = Offs_X-150
+    linePosA.y = (StartPos.y-(30+(line*15)))    
+    linePosB.x = Offs_X-150
+    linePosB.y = (StartPos.y-10)
+    TextPos.x = Offs_X-148
+    TextPos.y = (StartPos.y-(30+(line*15)))
+  else
+    linePosA.x = Offs_X-125
+    linePosA.y = (StartPos.y-(30+(line*15)))    
+    linePosB.x = Offs_X-125
+    linePosB.y = (StartPos.y-15)
+
+    TextPos.x = Offs_X-122
+    TextPos.y = (StartPos.y-(30+(line*15)))
+  end
+
+  DrawLine(linePosA.x, linePosA.y, linePosB.x, linePosB.y , 2, ARGB(mytrans, 255, my_bluepart, 0))
+  DrawText(tostring(thedmg).." "..tostring(text), 15, TextPos.x, TextPos.y , ARGB(mytrans, 255, my_bluepart, 0))
+end
+
+function GetRastoyanie(a, b)
+  if not b then
+    return GetRastoyanie(myHero,a)
+  end
+  local rastoyanie = math.sqrt((b.x-a.x)*(b.x-a.x) + (b.z-a.z)*(b.z-a.z))
+  return rastoyanie
+end
+
+function CanCast(spell)
+  return myHero:CanUseSpell(spell) == READY
+end
+
+function CheckFountain()
+  if not GetGame().map.index == 15 then return end
+  if myHero.team == 100 then
+    local rastoyanieDown = math.sqrt((myHero.x-lowBase.x)*(myHero.x-lowBase.x) + (myHero.z-lowBase.z)*(myHero.z-lowBase.z))
+    if rastoyanieDown < 900 then
+      FONTAN = true
+    else
+      FONTAN = false
+    end
+  elseif myHero.team == 200 then
+    local rastoyanieUp = math.sqrt((myHero.x-upBase.x)*(myHero.x-upBase.x) + (myHero.z-upBase.z)*(myHero.z-upBase.z))
+    if rastoyanieUp < 900 then
+      FONTAN = true
+    else
+      FONTAN = false
+    end
+  end
+end
+
+class 'KatarinaUpdate'
+  
+function KatarinaUpdate:__init(LocalVersion, Host, VersionPath, ScriptPath, SavePath, CallbackUpdate, CallbackNoUpdate, CallbackNewVersion, CallbackError) 
+  self.LocalVersion = LocalVersion
+  self.Host = Host
+  self.VersionPath = '/BoL/TCPUpdater/GetScript5.php?script='..self:Base64Encode(self.Host..VersionPath)..'&rand='..math.random(99999999)
+  self.ScriptPath = '/BoL/TCPUpdater/GetScript5.php?script='..self:Base64Encode(self.Host..ScriptPath)..'&rand='..math.random(99999999)
+  self.SavePath = SavePath
+  self.CallbackUpdate = CallbackUpdate
+  self.CallbackNoUpdate = CallbackNoUpdate
+  self.CallbackNewVersion = CallbackNewVersion
+  self.CallbackError = CallbackError
+  self:CreateSocket(self.VersionPath)
+  self.DownloadStatus = 'Connect to Server for VersionInfo'
+  AddTickCallback(function() self:GetOnlineVersion() end)
+end
+
+function KatarinaUpdate:OnDraw()
+  local bP = {['x1'] = WINDOW_W - (WINDOW_W - 390),['x2'] = WINDOW_W - (WINDOW_W - 20),['y1'] = WINDOW_H / 2,['y2'] = (WINDOW_H / 2) + 20,}
+  local text = 'Download Status: '..(self.DownloadStatus or 'Unknown')
+  DrawLine(bP.x1, bP.y1 + 10, bP.x2,  bP.y1 + 10, 18, ARGB(0x7D,0xE1,0xE1,0xE1))
+  local xOff
+  if self.File and self.Size then
+    local c = math.round(100/self.Size*self.File:len(),2)/100
+    xOff = c < 1 and math.ceil(370 * c) or 370
+  else
+    xOff = 0
+  end
+  DrawLine(bP.x2 + xOff, bP.y1 + 10, bP.x2, bP.y1 + 10, 18, ARGB(255, 5, 117, 1))
+  DrawLines2({D3DXVECTOR2(bP.x1, bP.y1),D3DXVECTOR2(bP.x2, bP.y1),D3DXVECTOR2(bP.x2, bP.y2),D3DXVECTOR2(bP.x1, bP.y2),D3DXVECTOR2(bP.x1, bP.y1),}, 3, ARGB(255, 86, 6, 62))
+  DrawText(text, 16, WINDOW_W - (WINDOW_W - 205) - (GetTextArea(text, 16).x / 2), bP.y1 + 2, ARGB(255, 8, 224, 52))
+end
+
+function KatarinaUpdate:CreateSocket(url)
+    if not self.LuaSocket then
+        self.LuaSocket = require("socket")
+    else
+        self.Socket:close()
+        self.Socket = nil
+        self.Size = nil
+        self.RecvStarted = false
+    end
+    self.LuaSocket = require("socket")
+    self.Socket = self.LuaSocket.tcp()
+    self.Socket:settimeout(0, 'b')
+    self.Socket:settimeout(99999999, 't')
+    self.Socket:connect('sx-bol.eu', 80)
+    self.Url = url
+    self.Started = false
+    self.LastPrint = ""
+    self.File = ""
+end
+
+function KatarinaUpdate:Base64Encode(data)
+    local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    return ((data:gsub('.', function(x)
+        local r,b='',x:byte()
+        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return b:sub(c+1,c+1)
+    end)..({ '', '==', '=' })[#data%3+1])
+end
+
+function KatarinaUpdate:GetOnlineVersion()
+    if self.GotScriptVersion then return end
+
+    self.Receive, self.Status, self.Snipped = self.Socket:receive(1024)
+    if self.Status == 'timeout' and not self.Started then
+        self.Started = true
+        self.Socket:send("GET "..self.Url.." HTTP/1.1\r\nHost: sx-bol.eu\r\n\r\n")
+    end
+    if (self.Receive or (#self.Snipped > 0)) and not self.RecvStarted then
+        self.RecvStarted = true
+        self.DownloadStatus = 'Downloading VersionInfo (0%)'
+    end
+
+    self.File = self.File .. (self.Receive or self.Snipped)
+    if self.File:find('</s'..'ize>') then
+        if not self.Size then
+            self.Size = tonumber(self.File:sub(self.File:find('<si'..'ze>')+6,self.File:find('</si'..'ze>')-1))
+        end
+        if self.File:find('<scr'..'ipt>') then
+            local _,ScriptFind = self.File:find('<scr'..'ipt>')
+            local ScriptEnd = self.File:find('</scr'..'ipt>')
+            if ScriptEnd then ScriptEnd = ScriptEnd - 1 end
+            local DownloadedSize = self.File:sub(ScriptFind+1,ScriptEnd or -1):len()
+            self.DownloadStatus = 'Downloading VersionInfo ('..math.round(100/self.Size*DownloadedSize,2)..'%)'
+        end
+    end
+    if self.File:find('</scr'..'ipt>') then
+        self.DownloadStatus = 'Downloading VersionInfo (100%)'
+        local a,b = self.File:find('\r\n\r\n')
+        self.File = self.File:sub(a,-1)
+        self.NewFile = ''
+        for line,content in ipairs(self.File:split('\n')) do
+            if content:len() > 5 then
+                self.NewFile = self.NewFile .. content
+            end
+        end
+        local HeaderEnd, ContentStart = self.File:find('<scr'..'ipt>')
+        local ContentEnd, _ = self.File:find('</scr'..'ipt>')
+        if not ContentStart or not ContentEnd then
+            if self.CallbackError and type(self.CallbackError) == 'function' then
+                self.CallbackError()
+            end
+        else
+            self.OnlineVersion = (Base64Decode(self.File:sub(ContentStart + 1,ContentEnd-1)))
+            self.OnlineVersion = tonumber(self.OnlineVersion)
+            if self.OnlineVersion and self.OnlineVersion > LocalVersion then
+                if self.CallbackNewVersion and type(self.CallbackNewVersion) == 'function' then
+                    self.CallbackNewVersion(self.OnlineVersion,self.LocalVersion)
+                end
+        if not Menu.update then return end
+        AddDrawCallback(function() self:OnDraw() end)
+                self:CreateSocket(self.ScriptPath)
+                self.DownloadStatus = 'Connect to Server for ScriptDownload'
+                AddTickCallback(function() self:DownloadUpdate() end)
+            else
+                if self.CallbackNoUpdate and type(self.CallbackNoUpdate) == 'function' then
+                    self.CallbackNoUpdate(self.LocalVersion)
+                end
+            end
+        end
+        self.GotScriptVersion = true
+    end
+end
+
+function KatarinaUpdate:DownloadUpdate()
+    if self.GotScriptUpdate then return end
+    self.Receive, self.Status, self.Snipped = self.Socket:receive(1024)
+    if self.Status == 'timeout' and not self.Started then
+        self.Started = true
+        self.Socket:send("GET "..self.Url.." HTTP/1.1\r\nHost: sx-bol.eu\r\n\r\n")
+    end
+    if (self.Receive or (#self.Snipped > 0)) and not self.RecvStarted then
+        self.RecvStarted = true
+        self.DownloadStatus = 'Downloading Script (0%)'
+    end
+
+    self.File = self.File .. (self.Receive or self.Snipped)
+    if self.File:find('</si'..'ze>') then
+        if not self.Size then
+            self.Size = tonumber(self.File:sub(self.File:find('<si'..'ze>')+6,self.File:find('</si'..'ze>')-1))
+        end
+        if self.File:find('<scr'..'ipt>') then
+            local _,ScriptFind = self.File:find('<scr'..'ipt>')
+            local ScriptEnd = self.File:find('</scr'..'ipt>')
+            if ScriptEnd then ScriptEnd = ScriptEnd - 1 end
+            local DownloadedSize = self.File:sub(ScriptFind+1,ScriptEnd or -1):len()
+            self.DownloadStatus = 'Downloading Script ('..math.round(100/self.Size*DownloadedSize,2)..'%)'
+        end
+    end
+    if self.File:find('</scr'..'ipt>') then
+        self.DownloadStatus = 'Downloading Script (100%)'
+        local a,b = self.File:find('\r\n\r\n')
+        self.File = self.File:sub(a,-1)
+        self.NewFile = ''
+        for line,content in ipairs(self.File:split('\n')) do
+            if content:len() > 5 then
+                self.NewFile = self.NewFile .. content
+            end
+        end
+        local HeaderEnd, ContentStart = self.NewFile:find('<scr'..'ipt>')
+        local ContentEnd, _ = self.NewFile:find('</scr'..'ipt>')
+        if not ContentStart or not ContentEnd then
+            if self.CallbackError and type(self.CallbackError) == 'function' then
+        print('Error1')
+        self.CallbackError()
+            end
+        else
+            local newf = self.NewFile:sub(ContentStart+1,ContentEnd-1)
+            local newf = newf:gsub('\r','')
+            if newf:len() ~= self.Size then
+                if self.CallbackError and type(self.CallbackError) == 'function' then
+          print('Error2')
+                    self.CallbackError()
+                end
+                return
+            end
+            local newf = Base64Decode(newf)
+            if not self.isSprite and type(load(newf)) ~= 'function' then
+                if self.CallbackError and type(self.CallbackError) == 'function' then
+          print('Error2')
+                    self.CallbackError()
+                end
+            else
+                local f = io.open(self.SavePath,"w+b")
+        if f then
+          f:write(newf)
+          f:close()
+          if self.CallbackUpdate and type(self.CallbackUpdate) == 'function' then
+            self.CallbackUpdate(self.OnlineVersion,self.LocalVersion)
+          end
+        end
+            end
+        end
+        self.GotScriptUpdate = true
+    end
+end
+
+class "SxWebResulter"
+
+function SxWebResulter:__init(Host, Path, cbComplete, cbError)
+    self.Host = Host
+    self.Path = Path
+    self.Callback = cbComplete
+  self.Error = cbError
+    self.LuaSocket = require("socket")
+
+    self.Socket = self.LuaSocket.connect(Host, 80)
+    self.Socket:send("GET "..self.Path.." HTTP/1.0\r\nHost: "..Host.."\r\n\r\n")
+    self.Socket:settimeout(0, 'b')
+    self.Socket:settimeout(99999999, 't')
+
+    self.LastPrint = ""
+    self.File = ""
+    AddDrawCallback(function() self:GetResult() end)
+end
+
+function SxWebResulter:GetResult()
+    if self.Status == 'closed' then return end
+    self.Receive, self.Status, self.Snipped = self.Socket:receive(1024)
+    if self.Receive then
+        if self.LastPrint ~= self.Receive then
+            self.LastPrint = self.Receive
+            self.File = self.File .. self.Receive
+        end
+    end
+
+    if self.Snipped ~= "" and self.Snipped then
+        self.File = self.File .. self.Snipped
+    end
+    if self.Status == 'closed' then
+        local HeaderEnd, ContentStart = self.File:find('\r\n\r\n')
+        if HeaderEnd and ContentStart then
+            self.Callback(self.File:sub(ContentStart + 1))
+        else
+            self.Error()
+        end
+    end
+end
